@@ -1,4 +1,4 @@
-# InternAI 🎓
+# InternAI 
 
 An AI-powered career assistant for students. Upload your resume, discover matching internships and jobs, and prepare for interviews — all powered by Google Gemini AI and the Jooble job API.
 
