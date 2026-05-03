@@ -75,7 +75,7 @@ ${resumeText}`;
 
 async function extractSkills(resumeText) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-  const prompt = `Extract the top 5-8 professional skills and technologies from this resume as a comma-separated list suitable for job searching. Return ONLY the comma-separated list, nothing else.
+  const prompt = `Extract the top 5-8 professional skills and technologies from this resume as a comma-separated list suitable for searching internship and new graduate job openings. Focus on technical skills, tools, and technologies rather than seniority or management experience. Return ONLY the comma-separated list, nothing else.
 
 Resume:
 ${resumeText}`;
