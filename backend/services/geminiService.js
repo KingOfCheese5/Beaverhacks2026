@@ -2,8 +2,55 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Maximum time (ms) we are willing to wait on a 429 retry-after hint.
+const MAX_RETRY_WAIT_MS = 65_000;
+// Number of automatic retries before giving up.
+const MAX_RETRIES = 2;
+
 function stripJsonFences(text) {
   return text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+}
+
+/**
+ * Parse the retry delay (in seconds) from a Gemini 429 error message.
+ * The API embeds "Please retry in <N>s" in the message text.
+ */
+function parseRetryDelay(err) {
+  const match = String(err?.message || '').match(/retry in (\d+(?:\.\d+)?)s/i);
+  return match ? Math.ceil(parseFloat(match[1])) * 1000 : null;
+}
+
+/**
+ * Calls model.generateContent(prompt) and retries up to MAX_RETRIES times
+ * when a 429 rate-limit error is returned, honouring the suggested retry delay.
+ * Throws a user-friendly error if the daily quota is exhausted or retries fail.
+ */
+async function generateWithRetry(model, prompt) {
+  let lastErr;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await model.generateContent(prompt);
+    } catch (err) {
+      lastErr = err;
+      const is429 = String(err?.message || '').includes('429');
+      if (!is429) throw err;
+
+      const delayMs = parseRetryDelay(err);
+
+      // If the suggested wait exceeds our cap, or we're out of retries, bail out.
+      if (!delayMs || delayMs > MAX_RETRY_WAIT_MS || attempt === MAX_RETRIES) {
+        const friendly = new Error(
+          'The AI service is temporarily unavailable due to rate limits. ' +
+          'Please try again in a few minutes.'
+        );
+        friendly.status = 429;
+        throw friendly;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  throw lastErr;
 }
 
 async function analyzeResume(resumeText) {
@@ -21,7 +68,7 @@ Each array should contain 3-5 concise, actionable items.
 Resume:
 ${resumeText}`;
 
-  const result = await model.generateContent(prompt);
+  const result = await generateWithRetry(model, prompt);
   const text = stripJsonFences(result.response.text());
   return JSON.parse(text);
 }
@@ -33,7 +80,7 @@ async function extractSkills(resumeText) {
 Resume:
 ${resumeText}`;
 
-  const result = await model.generateContent(prompt);
+  const result = await generateWithRetry(model, prompt);
   return result.response.text().trim();
 }
 
@@ -57,7 +104,7 @@ Job Description: ${job.description || job.snippet || 'Not provided'}
 Resume:
 ${resumeText}`;
 
-  const result = await model.generateContent(prompt);
+  const result = await generateWithRetry(model, prompt);
   const text = stripJsonFences(result.response.text());
   return JSON.parse(text);
 }

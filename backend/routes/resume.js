@@ -46,7 +46,7 @@ router.post('/upload', upload.single('resume'), async (req, res) => {
     res.json({ resumeText, feedback });
   } catch (err) {
     console.error('Resume upload error:', err);
-    res.status(500).json({ error: err.message || 'Failed to process resume' });
+    res.status(err.status || 500).json({ error: err.message || 'Failed to process resume' });
   }
 });
 
