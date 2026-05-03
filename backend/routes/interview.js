@@ -24,7 +24,7 @@ router.post('/generate', async (req, res) => {
     res.json(questions);
   } catch (err) {
     console.error('Interview generation error:', err);
-    res.status(500).json({ error: err.message || 'Failed to generate interview questions' });
+    res.status(err.status || 500).json({ error: err.message || 'Failed to generate interview questions' });
   }
 });
 
