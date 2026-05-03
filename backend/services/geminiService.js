@@ -86,7 +86,44 @@ ${resumeText}`;
 
 async function generateInterviewQuestions(job, resumeText) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-  const prompt = `You are an expert technical interviewer. Based on the job listing and candidate's resume below, generate interview questions and sample answers. Return ONLY a JSON object (no markdown) with this exact structure:
+  const prompt = `You are an expert technical interviewer.
+Your primary task is to generate interview questions based on the job description, not the resume.
+The resume is secondary context only and must NOT drive question generation.
+
+Step 1 – Job-First Analysis
+Extract from the job description:
+- Core technical skills required
+- Systems and architecture knowledge required
+- Conceptual knowledge areas
+- Practical engineering abilities implied by the role
+The job description is the PRIMARY source of truth.
+
+Step 2 – Technical Question Generation Rules
+Generate technical questions that:
+- Directly test skills required in the job description
+- Assess conceptual understanding, not memorized facts
+- Include applied/real-world scenarios
+- Include at least 1 transfer question (apply concept in a new situation)
+- Include at least 1 debugging, edge-case, or failure-mode question when relevant
+DO NOT generate questions that simply restate or reword resume bullet points.
+If a question can be answered by quoting the resume, it is INVALID.
+
+Step 3 – Resume Usage Rules for Technical Questions
+Use the resume ONLY to:
+- Lightly adjust framing or wording (optional personalization)
+- Slightly adjust difficulty based on claimed experience
+- Identify gaps where deeper probing may be needed
+DO NOT base questions on resume projects or bullet points alone.
+
+Technical question mix (exactly 5):
+- 1–2 system design or architecture questions (if applicable to the role)
+- 2–3 core technical knowledge questions grounded in job description requirements
+- 1 applied scenario question
+- 1 debugging / edge-case question (if relevant)
+
+Behavioral questions (exactly 5): generate standard behavioral questions relevant to the role and team environment.
+
+Return ONLY a JSON object (no markdown) with this exact structure:
 {
   "technicalQuestions": [
     { "question": "...", "sampleAnswer": "..." }
@@ -96,12 +133,12 @@ async function generateInterviewQuestions(job, resumeText) {
   ]
 }
 
-Generate exactly 5 technical questions and 5 behavioral questions. Sample answers should be 2-3 sentences.
+Sample answers should be 2-3 sentences.
 
 Job Title: ${job.title}
 Job Description: ${job.description || job.snippet || 'Not provided'}
 
-Resume:
+Resume (secondary context only):
 ${resumeText}`;
 
   const result = await generateWithRetry(model, prompt);
