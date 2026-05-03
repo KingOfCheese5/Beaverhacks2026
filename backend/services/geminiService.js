@@ -7,7 +7,7 @@ function stripJsonFences(text) {
 }
 
 async function analyzeResume(resumeText) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   const prompt = `You are an expert career counselor. Analyze the following resume and return ONLY a JSON object (no markdown) with these exact keys:
 {
   "strengths": ["..."],
@@ -27,7 +27,7 @@ ${resumeText}`;
 }
 
 async function extractSkills(resumeText) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   const prompt = `Extract the top 5-8 professional skills and technologies from this resume as a comma-separated list suitable for job searching. Return ONLY the comma-separated list, nothing else.
 
 Resume:
@@ -38,7 +38,7 @@ ${resumeText}`;
 }
 
 async function generateInterviewQuestions(job, resumeText) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
   const prompt = `You are an expert technical interviewer. Based on the job listing and candidate's resume below, generate interview questions and sample answers. Return ONLY a JSON object (no markdown) with this exact structure:
 {
   "technicalQuestions": [
